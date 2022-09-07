@@ -11,3 +11,4 @@ class CalcTest(SimpleTestCase):
     def test_sub(self):
         res = calc.sub(4,2)
         self.assertEqual(res, 2)
+
