@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'rest_framework',
+    'drf-spectacular',
 ]
 
 MIDDLEWARE = [
@@ -132,3 +134,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #Define User model
 AUTH_USER_MODEL = 'core.User'
+
+#tells rest framework to generate schema from class in drf_spectacular
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS' : 'drf_spectacular.openapi.AutoSchema',
+}
