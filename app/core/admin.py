@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from core import models 
+from core import models
 from django.utils.translation import gettext_lazy as _
 
 class UserAdmin(BaseUserAdmin):
@@ -10,11 +10,11 @@ class UserAdmin(BaseUserAdmin):
     list_display = ['email', 'name']
 
     #support for modifying users
-    fieldsets = ( 
+    fieldsets = (
         (None, {'fields': ('email', 'password')}),
         (_('Personal Info'), {'fields': ('name',)}),
-        (	
-            _('Permissions'), 
+        (
+            _('Permissions'),
             {
                 'fields': (
                     'is_active',

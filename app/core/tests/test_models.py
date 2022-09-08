@@ -3,7 +3,7 @@
 
 #Model Manager
 #Custom Logic
-    #hash password 
+    #hash password
 from django.test import TestCase
 from django.contrib.auth import get_user_model #Helper func from django
 
@@ -21,12 +21,12 @@ class ModelsTests(TestCase):
                                                     password = password )
         self.assertEqual(user.email, email)
         self.assertTrue(user.check_password(password))
-    
+
     def test_new_user_email_normalized(self):
         #Test email is normalized for new users.
         emails = [
             ['test@EXAMPLE.com', 'test@example.com'],
-            ['Test2@Example.com', 'Test2@example.com'], 
+            ['Test2@Example.com', 'Test2@example.com'],
             ['TEST3@EXAMPLE.COM', 'TEST3@example.com'],
             ['test4@example.COM', 'test4@example.com'],
         ]
@@ -34,7 +34,7 @@ class ModelsTests(TestCase):
         for email, expected in emails:
             user = get_user_model().objects.create_user(email, 'password')
             self.assertEqual(user.email, expected)
-        
+
     def test_new_user_without_email_raises_error(self):
         #Test that a new user without an email raises a ValueError.
 
@@ -52,7 +52,7 @@ class ModelsTests(TestCase):
 
 
 
-    
+
 
 
 

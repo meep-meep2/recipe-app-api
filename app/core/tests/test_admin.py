@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model #Helper func from django
-from django.urls import reverse 
+from django.urls import reverse
 from django.test import Client
 
 
@@ -12,7 +12,7 @@ class AdminSiteTests(TestCase):
         self.admin_user = get_user_model().objects.create_superuser('user@example.com', 'testpass')
         self.client.force_login(self.admin_user)
         self.user = get_user_model().objects.create_user(email='test@example.com', password='testpass', name='Test User')
-    
+
     def test_users_list(self):
         #Test that users are listed on page
         url = reverse('admin:core_user_changelist') #defined by django admin
