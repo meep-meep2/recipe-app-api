@@ -1,0 +1,18 @@
+Features:
+    -create
+    -list
+    -view detail
+    -update
+    -delete
+
+-Authenticated users only^^
+
+Endpoints:
+    -/recipes/
+        - GET : list all recipes
+        - POST : Create recipe
+    -/recipes/<recipe_id>
+        - GET : view details of recipe
+        - PUT/PATCH : update recipe
+        - DELETE : delete recipe
+
