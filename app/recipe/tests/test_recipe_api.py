@@ -12,7 +12,7 @@ RECIPES_URL = reverse('recipe:recipe-list')
 
 def detail_url(recipe_id):
     #Create and return a recipe detail URL
-    return reverse('recipe:recipe-detail', args=recipe_id)
+    return reverse('recipe:recipe-detail', args=[recipe_id])
 
 #helps set up a recipe with defaults, but lets us change the ones needed to test
 def create_recipe(user, **params):
@@ -42,11 +42,11 @@ class PublicRecipeAPITests(TestCase):
         res = self.client.get(RECIPES_URL)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-class PrivateUserApiTests(TestCase):
+class PrivateRecipeApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user('user@example.com', 'testpass')
-        self.client.force_authenticate(user=self.user) #All users using this client will be authenticated
+        self.client.force_authenticate(self.user) #All users using this client will be authenticated
 
 
     def test_retrieve_recipes(self):
