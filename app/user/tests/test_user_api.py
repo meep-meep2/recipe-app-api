@@ -52,7 +52,7 @@ class PublicUserApiTests(TestCase):
     def test_password_too_short_error(self):
         payload = {
             'email': 'test@example.com',
-            'password':'testpassword',
+            'password':'pw',
             'name': 'Test Name',
         }
 
@@ -152,6 +152,7 @@ class PrivateUserApiTests(TestCase):
     def test_update_user_profile(self):
         #Test updating the user profile for the authenticated user
         payload = {
+            'name': 'New Name',
             'email': 'test@example.com',
             'password':'testpassword',
         }
