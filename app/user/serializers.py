@@ -1,5 +1,10 @@
-from django.contrib.auth import get_user_model
+from urllib import request
+from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
+from django.utils.translation import gettext as _
+
+# Serializers allow complex data such as querysets and model instances to be converted to native Python datatypes that can then be easily rendered into JSON, XML or other content types. Serializers also provide deserialization, allowing parsed data to be converted back into complex types, after first validating the incoming data.
+# SERIALIZERS ARE VERY SIMILAR TO FORM AND MODEL FORM -- THESE JUST MADE FOR THE REST FRAMEWORK.
 
 class UserSerializer(serializers.ModelSerializer):
     #Serializer for the user object (Converts to and from python objects)
@@ -12,3 +17,44 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         #Create and return a user with encrypted password
         return get_user_model().objects.create_user(**validated_data)
+
+    def update(self, instance, validated_data):     #will be called by patch?
+        #Update and return user
+        password = validated_data.pop('password', None)
+        user = super().update(instance, validated_data) #from ModelSerializer class- just needs the data and serializer object?
+
+        if password:
+            user.set_password(password) #bc not in ModelSerializer class, thats from get_user_model() class
+            user.save()
+
+        return user
+
+
+
+class AuthTokenSerializer(serializers.Serializer):
+    #Serializer for the user authentication token
+
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        style={'input_type' : 'password'},
+        trim_whitespace=False,
+    )
+
+    def validate(self, attrs):
+        #Validate and authenticate the user.
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        is_user = authenticate(
+            request = self.context.get('request'),
+            username = email,
+            password = password,
+        )
+
+        if not is_user:
+            msg = _('Unable to authenticate with provided credentials.')
+            raise serializers.ValidationError(msg, code='authorization')
+
+        attrs['user'] = is_user
+        return attrs
+
