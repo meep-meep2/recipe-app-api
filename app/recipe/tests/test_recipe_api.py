@@ -14,6 +14,9 @@ def detail_url(recipe_id):
     #Create and return a recipe detail URL
     return reverse('recipe:recipe-detail', args=[recipe_id])
 
+def create_user(**params):
+    return get_user_model().objects.create_user(**params)
+
 #helps set up a recipe with defaults, but lets us change the ones needed to test
 def create_recipe(user, **params):
     #Create and return a sample recipe
@@ -100,4 +103,83 @@ class PrivateRecipeApiTests(TestCase):
         for k, v in payload.items():
             self.assertEqual(getattr(recipe, k), v)
         self.assertEqual(recipe.user, self.user)
+
+    def test_partial_update(self):
+        original_link = 'https://example.com/recipe.pdf'
+        recipe = create_recipe(
+            user = self.user,
+            title = 'Sample title',
+            link = original_link,
+        )
+
+        payload = {'title': 'New title'}
+
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.title, payload['title'])
+        self.assertEqual(recipe.link, original_link)
+        self.assertEqual(recipe.user, self.user)
+
+    def test_full_update(self):
+        recipe = create_recipe(
+            title = 'Sample recipe name',
+            user = self.user,
+            description = 'Sample recipe description',
+            link = 'http://example.com/recipe.pdf',
+        )
+
+        payload = {
+            'title' : 'Sample2 recipe name',
+            'time_minutes' : 10,
+            'price' : Decimal('2.50'), #shouldn't use decimal or float fields, should use integer for money
+            'description' : 'NEW recipe description',
+            'link' : 'http://example.com/recipe.pdf'
+        }
+
+        url = detail_url(recipe.id)
+        res = self.client.put(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        recipe.refresh_from_db()
+
+        for k, v in payload.items():
+            self.assertEqual(getattr(recipe, k), v)
+        self.assertEqual(recipe.user, self.user)
+
+    def test_update_user_returns_error(self):
+        new_user = create_user(email = 'user2@example.com', password ='testpass')
+        recipe = create_recipe(user=self.user)
+
+        payload = { 'user' : new_user.id }
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload)
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.user, self.user)
+
+
+    def test_delete_recipe(self):
+        recipe = create_recipe(user=self.user)
+        url = detail_url(recipe.id)
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Recipe.objects.filter(id=recipe.id).exists())
+
+    def test_recipe_other_users_recipe_error(self):
+        new_user = create_user(email = 'user2@example.com', password ='testpass')
+        recipe = create_recipe(user=new_user)
+        url = detail_url(recipe.id)
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Recipe.objects.filter(id=recipe.id).exists())
+
+
+
+
+
+
+
+
+
 
