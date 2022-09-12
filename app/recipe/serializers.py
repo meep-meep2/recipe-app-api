@@ -30,9 +30,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
 
-
-
-
 class RecipeDetailSerializer(RecipeSerializer):
 
     class Meta(RecipeSerializer.Meta):
