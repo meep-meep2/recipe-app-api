@@ -70,11 +70,12 @@ class PrivateIngredientsApiTests(TestCase):
         ingr.refresh_from_db()
         self.assertEqual(ingr.name, payload['name'])
 
-    # def test_delete_recipe(self):
-    #     ingr = Ingredient.objects.create(user=self.user, name='Salt')
-    #     url = detail_url(ingr.id)
-    #     res = self.client.delete(url)
+    def test_delete_ingredient(self):
+        ingr = Ingredient.objects.create(user=self.user, name='Salt')
 
-    #     self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-    #     ingrs = ingr.objects.filter(user=self.user)
-    #     self.assertFalse(ingrs.exists())
+        url = detail_url(ingr.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        ingrs = Ingredient.objects.filter(user=self.user)
+        self.assertFalse(ingrs.exists())
