@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Recipe, Tag
+from core.models import Recipe, Tag, Ingredient
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
 RECIPES_URL = reverse('recipe:recipe-list')
@@ -218,6 +218,95 @@ class PrivateRecipeApiTests(TestCase):
         for tag in payload['tags']:
             exists = recipe.tags.filter(
                 name = tag['name'],
+                user = self.user
+            ).exists()
+            self.assertTrue(exists)
+
+    def test_create_tag_on_update(self):
+        #Test creating tag when updating a recipe
+        recipe = create_recipe(user=self.user)
+
+        payload = {'tags': [{'name': 'Lunch'}]}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_tag = Tag.objects.get(user=self.user, name='Lunch')
+        self.assertIn(new_tag, recipe.tags.all()) #tags not cached when creating recipe (bc nested serializer) so need to do refresh from db on recipe
+
+    def test_update_recipe_assign_tag(self):
+        #Test assigning an existing tag when updating a recipe
+        tag_soup = Tag.objects.create(user=self.user, name='Soup')
+        recipe = create_recipe(user = self.user)
+        recipe.tags.add(tag_soup)
+
+        tag_lunch = Tag.objects.create(user=self.user, name='Lunch')
+        payload = {'tags': [{'name': 'Lunch'}]}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(tag_lunch, recipe.tags.all())
+        self.assertNotIn(tag_soup, recipe.tags.all())
+
+    def test_clear_recipe_tags(self):
+        tag_soup = Tag.objects.create(user=self.user, name='Soup')
+        recipe = create_recipe(user = self.user)
+        recipe.tags.add(tag_soup)
+
+        payload = {'tags': []}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.tags.count(), 0)
+
+    #---------- Ingredients --------------------------
+
+    def test_create_recipe_with_new_ingredients(self):
+        payload = {
+            'title' : 'Sample2 recipe name',
+            'time_minutes' : 10,
+            'price' : Decimal('2.50'), #shouldn't use decimal or float fields, should use integer for money
+            # 'tags' : [{'name': 'Thai'}, {'name' : 'Dinner'}],
+            'ingredients' : [{'name': 'ingr1'}, {'name': 'ingr2'}],
+        }
+
+        res = self.client.post(RECIPES_URL, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)    #helping provide more info about why the test failed
+        recipe = recipes[0]
+        self.assertEqual(recipe.ingredients.count(), 2)
+        for ingr in payload['ingredients']:
+            exists = recipe.ingredients.filter(
+                name = ingr['name'],
+                user = self.user
+            ).exists()
+            self.assertTrue(exists)
+
+    def test_create_recipe_with_existing_ingredients(self):
+        ingr = Ingredient.objects.create(user = self.user, name='ingr1')
+        payload = {
+            'title' : 'Sample2 recipe name',
+            'time_minutes' : 10,
+            'price' : Decimal('2.50'), #shouldn't use decimal or float fields, should use integer for money
+            'ingredients' : [{'name': 'ingr1'}, {'name': 'ingr2'}],
+        } #first tag should not be recreated it should just attach itself, the second tag should be created bc it doesnt exist yet.
+
+        res = self.client.post(RECIPES_URL, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)    #helping provide more info about why the test failed
+        recipe = recipes[0]
+        self.assertEqual(recipe.ingredients.count(), 2)
+        self.assertIn(ingr, recipe.ingredients.all())
+            #Ensures that the specific tag 'tag' exists in the tags assigned to the recipe.
+
+        for ingr in payload['ingredients']:
+            exists = recipe.ingredients.filter(
+                name = ingr['name'],
                 user = self.user
             ).exists()
             self.assertTrue(exists)

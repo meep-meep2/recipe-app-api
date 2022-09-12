@@ -15,10 +15,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, required=False) #adds nested serializer (a model within a model, so a single recipe can have a list of tag objects)
-
+    ingredients = IngredientSerializer(many=True, required=False)
     class Meta:
         model = Recipe
-        fields = ['id', 'title', 'time_minutes', 'price', 'link', 'tags']
+        fields = ['id', 'title', 'time_minutes', 'price', 'link', 'tags', 'ingredients']
         read_only_fields = ['id']
 
     def _get_or_create_tags(self, tags, recipe):
@@ -30,12 +30,25 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
             recipe.tags.add(tag_obj) #*2*
 
+    def _get_or_create_ingredients(self, ingredients, recipe):
+        auth_user = self.context['request'].user
+        for ingr in ingredients:
+            ingr_obj, created = Ingredient.objects.get_or_create(
+                user = auth_user,
+                **ingr, #make sure all fields in tag are created
+            )
+            recipe.ingredients.add(ingr_obj) #*2*
+
     #Custom logic that allows addition of tags (a nested serializer which is read only by default)
     def create(self, validated_data): #overrides default
 
         tags = validated_data.pop('tags', []) #remove tag object from validated data (like get, but removes data from list if it exists. If DNE return empty list)
+        ingrs = validated_data.pop('ingredients', [])
+
         recipe = Recipe.objects.create(**validated_data) #have to remove tag object bc Recipe is not expecting tag in its create method, wants you to add it as an additional field later -- see *2*
         self._get_or_create_tags(tags, recipe)
+        self._get_or_create_ingredients(ingrs, recipe)
+
 
         return recipe
 
@@ -45,6 +58,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         if tags is not None:
             instance.tags.clear()
             self._get_or_create_tags(tags, instance)
+
+        ingrs = validated_data.pop('ingredients', None)
+        if ingrs is not None:
+            instance.ingredients.clear()
+            self._get_or_create_ingredients(ingrs, instance)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
