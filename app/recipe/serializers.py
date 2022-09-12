@@ -15,11 +15,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'time_minutes', 'price', 'link', 'tags']
         read_only_fields = ['id']
 
-    #Custom logic that allows addition of tags (a nested serializer which is read only by default)
-    def create(self, validated_data):
-        tags = validated_data.pop('tags', []) #remove tag object from validated data (like get, but removes data from list if it exists. If DNE return empty list)
-        recipe = Recipe.objects.create(**validated_data) #have to remove tag object bc Recipe is not expecting tag in its create method, wants you to add it as an additional field later -- see *2*
-
+    def _get_or_create_tags(self, tags, recipe):
         auth_user = self.context['request'].user
         for tag in tags:
             tag_obj, created = Tag.objects.get_or_create(
@@ -27,7 +23,30 @@ class RecipeSerializer(serializers.ModelSerializer):
                 **tag, #make sure all fields in tag are created
             )
             recipe.tags.add(tag_obj) #*2*
+
+    #Custom logic that allows addition of tags (a nested serializer which is read only by default)
+    def create(self, validated_data): #overrides default
+
+        tags = validated_data.pop('tags', []) #remove tag object from validated data (like get, but removes data from list if it exists. If DNE return empty list)
+        recipe = Recipe.objects.create(**validated_data) #have to remove tag object bc Recipe is not expecting tag in its create method, wants you to add it as an additional field later -- see *2*
+        self._get_or_create_tags(tags, recipe)
+
         return recipe
+
+    def update(self, instance, validated_data):
+        #overrides default
+        tags = validated_data.pop('tags', None)
+        if tags is not None:
+            instance.tags.clear()
+            self._get_or_create_tags(tags, instance)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
+
 
 
 class RecipeDetailSerializer(RecipeSerializer):
