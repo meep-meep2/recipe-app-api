@@ -27,7 +27,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 #using viewset bc Create Read Update Delete on a model - has to be generic so we can add the mixin
-class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class TagViewSet(mixins.UpdateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     #Manage tags in the db
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
@@ -39,3 +39,5 @@ class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         #instead of returning all objects defined, filter by authenticated user
         return self.queryset.filter(user=self.request.user).order_by('-name')
                 #reverse name order
+
+    #mixin.UpdateModelMixin - automatically updates model for you apparently so we don't have to write a method for it.
