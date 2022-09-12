@@ -27,7 +27,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 #using viewset bc Create Read Update Delete on a model - has to be generic so we can add the mixin
-class TagViewSet(mixins.UpdateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+class TagViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin,
+                 mixins.ListModelMixin, viewsets.GenericViewSet):
     #Manage tags in the db
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
