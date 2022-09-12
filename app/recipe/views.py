@@ -1,7 +1,7 @@
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from core.models import Recipe, Tag
+from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -42,3 +42,17 @@ class TagViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin,
                 #reverse name order
 
     #mixin.UpdateModelMixin - automatically updates model for you apparently so we don't have to write a method for it.
+
+class IngredientViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin,
+                 mixins.ListModelMixin, viewsets.GenericViewSet):
+    #Manage tags in the db
+    serializer_class = serializers.IngredientSerializer
+    queryset = Ingredient.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    #only want to return tags associated with authenticated user.
+    def get_queryset(self):
+        #instead of returning all objects defined, filter by authenticated user
+        return self.queryset.filter(user=self.request.user).order_by('-name')
+                #reverse name order
