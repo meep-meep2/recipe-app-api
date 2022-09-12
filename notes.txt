@@ -21,4 +21,18 @@ Ingredients Design:
     -/api/recipe/<id>
         -PUT/PATCH : create or modify ingredients
 
+----------------------------
+Image API Design:
+    -handling static/media files
+    -adding image dependencies
+        -Pillow
+            -zlib, zlib-dev
+            -jpeg-dev
+
+    -updating recipe model with image field.
+
+-Endpoints:
+    -/api/recipe/<id>/upload-image/
+        -POST: upload image
+
 
