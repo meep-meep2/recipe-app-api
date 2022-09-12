@@ -9,7 +9,7 @@ from recipe.serializers import IngredientSerializer
 
 INGR_URL = reverse('recipe:ingredient-list')
 
-def detail_url(ingr_id): #maybe dont need this idk
+def detail_url(ingr_id):
     #create and return a tag detail url
     return reverse('recipe:ingredient-detail', args=[ingr_id])
 
@@ -58,3 +58,23 @@ class PrivateIngredientsApiTests(TestCase):
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]['name'], ingredient.name)
         self.assertEqual(res.data[0]['id'], ingredient.id)
+
+    def test_update_ingredient(self):
+
+        ingr = Ingredient.objects.create(user=self.user, name='Sugar')
+        payload = {'name' : 'Pepper'}
+
+        url = detail_url(ingr.id)
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        ingr.refresh_from_db()
+        self.assertEqual(ingr.name, payload['name'])
+
+    # def test_delete_recipe(self):
+    #     ingr = Ingredient.objects.create(user=self.user, name='Salt')
+    #     url = detail_url(ingr.id)
+    #     res = self.client.delete(url)
+
+    #     self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+    #     ingrs = ingr.objects.filter(user=self.user)
+    #     self.assertFalse(ingrs.exists())
