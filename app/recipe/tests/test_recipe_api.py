@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Recipe
+from core.models import Recipe, Tag
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
 RECIPES_URL = reverse('recipe:recipe-list')
@@ -173,6 +173,59 @@ class PrivateRecipeApiTests(TestCase):
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Recipe.objects.filter(id=recipe.id).exists())
+
+    #Nested Serializer Tests ---
+
+    def test_create_recipe_with_new_tags(self):
+        payload = {
+            'title' : 'Sample2 recipe name',
+            'time_minutes' : 10,
+            'price' : Decimal('2.50'), #shouldn't use decimal or float fields, should use integer for money
+            'tags' : [{'name': 'Thai'}, {'name' : 'Dinner'}],
+        }
+
+        res = self.client.post(RECIPES_URL, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)    #helping provide more info about why the test failed
+        recipe = recipes[0]
+        self.assertEqual(recipe.tags.count(), 2)
+        for tag in payload['tags']:
+            exists = recipe.tags.filter(
+                name = tag['name'],
+                user = self.user
+            ).exists()
+            self.assertTrue(exists)
+
+    def test_create_recipe_with_existing_tags(self):
+        tag = Tag.objects.create(user = self.user, name='Italian')
+        payload = {
+            'title' : 'Sample2 recipe name',
+            'time_minutes' : 10,
+            'price' : Decimal('2.50'), #shouldn't use decimal or float fields, should use integer for money
+            'tags' : [{'name': 'Italian'}, {'name' : 'Breakfast'}],
+        } #first tag should not be recreated it should just attach itself, the second tag should be created bc it doesnt exist yet.
+
+        res = self.client.post(RECIPES_URL, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)    #helping provide more info about why the test failed
+        recipe = recipes[0]
+        self.assertEqual(recipe.tags.count(), 2)
+        self.assertIn(tag, recipe.tags.all())
+            #Ensures that the specific tag 'tag' exists in the tags assigned to the recipe.
+
+        for tag in payload['tags']:
+            exists = recipe.tags.filter(
+                name = tag['name'],
+                user = self.user
+            ).exists()
+            self.assertTrue(exists)
+
+
+
+
+
 
 
 
