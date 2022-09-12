@@ -1,0 +1,24 @@
+Ingredients Design:
+    -ability to add Ingredients to recipes
+    -model for Ingredients
+    -add Ingredients api
+    -update recipes api
+        -create and manage Ingredients
+
+-Model:
+    -name
+    -user
+
+-Endpoint:
+    -/api/recipe/ingredients
+        -GET : list ingredients
+    -/api/recipe/ingredients/<id>
+        -GET : list ingredients details
+        -PUT/Patch : update
+        -DELETE
+    -/api/recipe
+        -POST : create ingredients as part  of recipe
+    -/api/recipe/<id>
+        -PUT/PATCH : create or modify ingredients
+
+
